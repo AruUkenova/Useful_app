@@ -1,0 +1,107 @@
+name: useful_app CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [published]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+  build-debug:
+    runs-on: ubuntu-latest
+    needs: check
+    if: github.event_name != 'release'
+
+    strategy:
+      matrix:
+        include:
+          - flavor: dev
+            target: lib/main_dev.dart
+          - flavor: prod
+            target: lib/main_prod.dart
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Build debug APK
+        run: flutter build apk --debug --flavor ${{ matrix.flavor }} -t ${{ matrix.target }}
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-debug-${{ matrix.flavor }}
+          path: build/app/outputs/flutter-apk/*.apk
+
+  build-release:
+    runs-on: ubuntu-latest
+    needs: check
+    if: github.event_name == 'release'
+
+    strategy:
+      matrix:
+        include:
+          - flavor: dev
+            target: lib/main_dev.dart
+          - flavor: prod
+            target: lib/main_prod.dart
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Build release APK with auto build number
+        run: |
+          flutter build apk \
+            --release \
+            --flavor ${{ matrix.flavor }} \
+            -t ${{ matrix.target }} \
+            --build-number=${{ github.run_number }}
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-release-${{ matrix.flavor }}-build-${{ github.run_number }}
+          path: build/app/outputs/flutter-apk/*.apk
