@@ -1,17 +1,39 @@
 # useful_app
 
-A new Flutter project.
+Flutter application with CI/CD and environment-based configuration.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+* dev / prod flavors
+* GitHub Actions CI
+* automatic build number for releases
+* debug & release APK builds
 
-A few resources to get you started if this is your first Flutter project:
+## Run locally
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter run --flavor dev -t lib/main_dev.dart
+flutter run --flavor prod -t lib/main_prod.dart
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Build APK
+
+```bash
+flutter build apk --flavor dev -t lib/main_dev.dart
+flutter build apk --flavor prod -t lib/main_prod.dart
+```
+
+## CI
+
+On every push:
+
+* flutter pub get
+* flutter analyze
+* flutter test
+* build debug APK
+
+On release:
+
+* build release APK
+* auto-increment build number
+
